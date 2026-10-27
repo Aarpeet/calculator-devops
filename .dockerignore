@@ -1,0 +1,27 @@
+# Keep the build context small: the builder stage only needs pom.xml and src/
+target/
+.git/
+.gitignore
+.dockerignore
+README.md
+REPORT.md
+Jenkinsfile
+docker-compose.yml
+nginx/
+docs/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# Local environment, secrets and misc
+.env
+.env.*
+*.log
+*.docx
+.DS_Store
