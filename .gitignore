@@ -1,0 +1,50 @@
+# ---- Maven / Java build output ----
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+replay_pid*
+dependency-reduced-pom.xml
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE files ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.apt_generated/
+.sts4-cache/
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
+out/
+bin/
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+
+# ---- Secrets / local environment (never commit credentials) ----
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+credentials*.json
+secrets/
+.docker/config.json
+
+# ---- Course material (not part of the codebase) ----
+*.docx
