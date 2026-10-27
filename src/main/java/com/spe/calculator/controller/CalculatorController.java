@@ -33,4 +33,15 @@ public class CalculatorController {
     public CalculationResponse subtract(@RequestParam BigDecimal a, @RequestParam BigDecimal b) {
         return CalculationResponse.of("subtract", a, b, calculatorService.subtract(a, b));
     }
+
+    @GetMapping("/multiply")
+    public CalculationResponse multiply(@RequestParam BigDecimal a, @RequestParam BigDecimal b) {
+        return CalculationResponse.of("multiply", a, b, calculatorService.multiply(a, b));
+    }
+
+    /** b = 0 raises ArithmeticException, mapped to HTTP 400 by GlobalExceptionHandler. */
+    @GetMapping("/divide")
+    public CalculationResponse divide(@RequestParam BigDecimal a, @RequestParam BigDecimal b) {
+        return CalculationResponse.of("divide", a, b, calculatorService.divide(a, b));
+    }
 }
