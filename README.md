@@ -212,6 +212,66 @@ Both containers are hardened: read-only root filesystems (with `tmpfs` only wher
 
 ---
 
+## Operating the deployment
+
+### What is running
+```bash
+docker compose ps
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+curl -s http://localhost:8081/actuator/info                     # app.build = Jenkins build currently live
+docker image inspect "$(docker inspect -f '{{.Config.Image}}' calculator-app)" \
+  --format '{{json .Config.Labels}}'                            # build number, git commit, build time
+```
+
+### Smoke-test every endpoint, directly (8082) and through the proxy (8081)
+```bash
+for port in 8082 8081; do
+  for path in "actuator/health" "api/v1/add?a=10&b=5" "api/v1/subtract?a=10&b=5" \
+              "api/v1/multiply?a=10&b=5" "api/v1/divide?a=10&b=4" \
+              "api/v1/divide?a=10&b=0" "api/v1/add?a=abc&b=5" "api/v1/add?a=2"; do
+    printf '%-5s %-28s ' "$port" "$path"; curl -s -w ' [%{http_code}]\n' "http://localhost:$port/$path"
+  done
+done
+```
+
+### Ship a change
+Every push to `main` is built, tested, published and deployed with no manual steps:
+```bash
+git switch -c feature/<name>
+# edit code and tests
+mvn -q test
+git commit -am "Describe the change"
+git push -u origin feature/<name>      # then open and merge a PR (or push small fixes straight to main)
+watch -n 2 'curl -s http://localhost:8081/actuator/info'   # app.build flips to the new build number
+```
+A change that breaks a test stops at the *Test* stage: no image is pushed, the running version keeps
+serving, and a failure email is sent.
+
+### Roll back to an earlier build
+Each build's image stays on Docker Hub under its build number, so a rollback is a single command
+(the next pipeline run deploys its own build again):
+```bash
+DOCKER_IMAGE=aarpeet/calculator-api:10 docker compose up -d
+```
+
+### Proxy behaviour
+```bash
+curl -sI http://localhost:8081/actuator/health          # security headers
+seq 150 | xargs -P 75 -I{} curl -s -o /dev/null -w '%{http_code}\n' \
+  'http://localhost:8081/api/v1/add?a=1&b=2' | sort | uniq -c    # burst: excess requests get 429
+docker compose stop calculator-app
+curl -s 'http://localhost:8081/api/v1/add?a=1&b=2'      # JSON 503 instead of an HTML error page
+docker compose start calculator-app
+```
+
+### Logs and history
+```bash
+docker compose logs -f --tail=50 calculator-app
+git log --graph --oneline --all
+```
+
+---
+
 ## Jenkins CI/CD setup
 
 The pipeline is defined in [`Jenkinsfile`](Jenkinsfile):
@@ -277,17 +337,23 @@ automated mail relayed through Gmail, so a Gmail inbox is used as the recipient.
 
 - **Webhook (preferred):** GitHub repo → *Settings → Webhooks → Add webhook* →
   Payload URL `https://<public-jenkins-url>/github-webhook/`, content type `application/json`, *Just the push event*.
-  A Jenkins on `localhost` is not reachable from GitHub, so expose it with a tunnel
-  (e.g. `ngrok http 8080`, or `smee.io` + `smee-client`).
+  A Jenkins on `localhost` is not reachable from GitHub, so expose it with a tunnel. With an ngrok static
+  domain (set it as the *Jenkins URL* too), run:
+  ```bash
+  ngrok http --url=https://<your-static-domain>.ngrok-free.dev 8080
+  ```
+  Expose Jenkins only with authentication enabled: anonymous users must not hold any admin rights.
 - **Fallback:** `pollSCM('H/5 * * * *')` checks GitHub every ~5 minutes, so pushes are still deployed
   automatically even without a webhook.
 
 ### Pipeline guarantees
 
 - **Fails fast**: a failing unit/integration test fails the *Test* stage, and JUnit results are always published.
-- **Immutable tags**: each run pushes `aarpeet/calculator-api:<BUILD_NUMBER>` and `:latest`.
+- **Immutable tags**: each run pushes `aarpeet/calculator-api:<BUILD_NUMBER>` and `:latest`; a failed build
+  never publishes an image, and any earlier tag can be redeployed for a rollback.
 - **Idempotent**: `disableConcurrentBuilds()`, a fixed Compose project, `--remove-orphans`;
   re-running only replaces the `calculator-app` container, and Nginx resolves it dynamically, so the proxy keeps working.
+  `nginx-proxy` is recreated only when `nginx/nginx.conf` actually changed.
 - **Verified deploy**: the stage polls `:8082/actuator/health`, `:8081/api/v1/add?a=2&b=3` and
   `:8081/actuator/info` (which must report this run's build number, proving the new container is live) and
   fails, dumping `docker compose ps` and logs, if that doesn't happen within ~150s.
@@ -296,9 +362,19 @@ automated mail relayed through Gmail, so a Gmail inbox is used as the recipient.
 
 ## Git workflow
 
-- `main` holds releasable code. Features are developed on branches and merged via Pull Requests:
-  - [#1 `feature/multiply-divide-validation`](https://github.com/Aarpeet/calculator-devops/pull/1): multiply/divide, validation, Actuator, tests
-  - [#2 `feature/devops-pipeline`](https://github.com/Aarpeet/calculator-devops/pull/2): Dockerfile, Compose + Nginx, Jenkinsfile, docs
+- `main` holds releasable code and every push to it is deployed. Features are developed on branches and
+  merged through Pull Requests; small follow-up fixes go straight to `main`.
+
+| PR | Branch | Change |
+|---|---|---|
+| [#1](https://github.com/Aarpeet/calculator-devops/pull/1) | `feature/multiply-divide-validation` | multiply/divide, validation, Actuator, tests |
+| [#2](https://github.com/Aarpeet/calculator-devops/pull/2) | `feature/devops-pipeline` | Dockerfile, Compose + Nginx, Jenkinsfile, docs |
+| [#3](https://github.com/Aarpeet/calculator-devops/pull/3) | `feature/notification-recipient` | build notifications to a Gmail inbox |
+| [#4](https://github.com/Aarpeet/calculator-devops/pull/4) | `feature/build-info` | build number on `/actuator/info` |
+| [#5](https://github.com/Aarpeet/calculator-devops/pull/5) | `feature/verify-deployed-build` | Deploy stage verifies the live build number |
+| [#6](https://github.com/Aarpeet/calculator-devops/pull/6) | `feature/oci-labels` | OCI image labels, `--pull` |
+| [#7](https://github.com/Aarpeet/calculator-devops/pull/7) | `feature/compose-hardening` | read-only containers, limits, log rotation |
+
 - `.gitignore` excludes `target/`, IDE files and secret material (`.env`, keys, keystores).
   No credentials live in the repository; Docker Hub access comes only from the Jenkins credentials store.
 

@@ -9,8 +9,8 @@
 A Spring Boot 3 (Java 17, Maven) REST service exposes `add`, `subtract`, `multiply` and `divide` under
 `/api/v1` plus `/actuator/health`. Inputs are bound to `BigDecimal` for exact results, and a
 `@ControllerAdvice` maps missing, non-numeric or out-of-range parameters and division by zero to
-**HTTP 400** with `{error, status, timestamp}`. **48 JUnit 5 tests** (unit + `@SpringBootTest`/MockMvc
-integration) give 95.5 % line and 100 % branch coverage (JaCoCo). The pipeline turns every push to `main`
+**HTTP 400** with `{error, status, timestamp}`. **49 JUnit 5 tests** (unit + `@SpringBootTest`/MockMvc
+integration) give 95.6 % line and 100 % branch coverage (JaCoCo). The pipeline turns every push to `main`
 into a tested, versioned Docker image on Docker Hub and a health-verified Compose deployment, with no manual steps.
 
 ## 2. Pipeline & Deployment Architecture
@@ -72,6 +72,9 @@ the three newest image tags on the host.
   `SIGTERM` for graceful shutdown.
 - `-XX:MaxRAMPercentage=75` makes the JVM respect container memory limits. `.dockerignore` limits the build
   context to `pom.xml` + `src/`.
+- Per-build values come last so they never invalidate cached layers: `BUILD_NUMBER` (reported on `/actuator/info`)
+  and OCI labels for version, git revision and build time. Jenkins builds with `--pull` so base-image patches are
+  picked up.
 
 **docker-compose.yml.**
 - Two services on a custom bridge network **`calc-net`**:
@@ -82,6 +85,10 @@ the three newest image tags on the host.
     check. It starts only after the app is `service_healthy`.
 - A single `docker compose up -d` brings up the whole stack. The fixed project name `calculator-devops` makes
   local runs and Jenkins manage the *same* stack.
+- **Hardening:** read-only root filesystems (`tmpfs` only where needed), `no-new-privileges`, CPU/memory limits
+  (512 MB API / 64 MB proxy), rotated JSON logs, and a 30 s stop grace period.
+- **Nginx:** resolves the app per request via Docker DNS, adds security headers, rate-limits each client
+  (20 req/s, burst 40 → 429), and returns JSON (not HTML) for errors it generates itself.
 
 ## 5. Challenges Faced and Solutions
 
@@ -96,42 +103,3 @@ the three newest image tags on the host.
 | 7 | **Jenkins execution context**: steps run as the `jenkins` user under `/bin/sh` (dash), not bash. | `jenkins` added to the `docker` group; all `sh` blocks are POSIX and were tested under `/bin/sh -xe`, including the failure path (exit 1 with diagnostics). The Jenkinsfile was checked with Jenkins' declarative linter. |
 | 8 | **Silent email failure**: build #1 logged only `Sending email to: …`, but no mail arrived. email-ext hides SMTP errors outside debug mode, and the institute mailbox (Microsoft 365) filters Gmail-relayed automation. | Enabled email-ext debug mode, which exposed Gmail's `535-5.7.8 Username and Password not accepted`. Fixed by storing a Gmail **App Password** (2-Step Verification) in the `gmail-smtp` credential, and sent notifications to a Gmail inbox. |
 | 9 | **Proxy config changes never went live**: after a green build the new Nginx security headers were missing. A single-file bind mount pins the file that existed at container start, `git checkout` replaces `nginx.conf` with a new file, and Compose doesn't recreate Nginx because `docker-compose.yml` is unchanged. | The Deploy stage compares the config inside the container with the checked-out file (`cmp`) and force-recreates **only** `nginx-proxy` when they differ, so re-runs with no change remain no-ops. |
-
-## 6. Live Demo Checklist (Class 17) and Screenshot Guide
-
-**Before class:**
-- `systemctl status jenkins` is running.
-- The last build is green.
-- `docker compose ps` shows both containers **(healthy)**.
-- A test email has been received.
-- The webhook tunnel is running (or rely on Poll SCM, ≤ 5 min).
-- Terminal tabs are open for `git`, `docker ps` and `curl`.
-
-**Live demo:**
-1. **Repo tour:** README, `git log --graph --oneline --all` (progressive commits, two merged PRs), `.gitignore`, no secrets.
-2. **Walk through** `Jenkinsfile` → `Dockerfile` → `docker-compose.yml` → `nginx/nginx.conf`, explaining each stage.
-3. **Make a visible change** on a branch:
-   - Change the message in `CalculatorService.divide` to `"Cannot divide by zero"`.
-   - Update the expected string in both test classes.
-   - Commit, open a PR and merge to `main` (or push directly).
-4. **Show the trigger:** a new Jenkins build starts automatically. Narrate the stages in Stage View.
-5. **Show the result:**
-   - The Test stage publishes 48 passing tests.
-   - Docker Hub shows the new tag `:N`.
-   - `docker ps` shows `aarpeet/calculator-api:N` (healthy).
-   - `curl :8081/api/v1/divide?a=1&b=0` returns the new message.
-6. **Show the success email** in the inbox.
-7. *(Optional)* Push a commit that breaks a test → red Test stage, no deploy, the running version keeps serving, and a failure email arrives. Then revert.
-
-**Screenshot capture guide:**
-
-| # | Screenshot | Where |
-|---|---|---|
-| 1 | Green pipeline (all 6 stages) | Jenkins job page → *Stage View* (`http://localhost:8080/job/calculator-devops/`) |
-| 2 | JUnit results (48 tests, 0 failures) | Build → *Test Result* |
-| 3 | Deploy verification log | Build → *Console Output* ("Deployment healthy …") |
-| 4 | Email notification | Inbox: `[Jenkins] SUCCESS: calculator-devops #N` |
-| 5 | Docker Hub tags `N` + `latest` | `hub.docker.com/r/aarpeet/calculator-api/tags` |
-| 6 | Running containers | `docker ps` (both **healthy**, ports 8081/8082) |
-| 7 | API responses incl. errors | `curl` on `:8082` and `:8081`: add/subtract/multiply/divide, `b=0` → 400, `a=abc` → 400 |
-| 8 | Git practices | `git log --graph --oneline --all`; GitHub *Pull requests → Closed* (#1, #2 merged) |
