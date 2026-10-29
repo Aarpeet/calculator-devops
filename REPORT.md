@@ -52,7 +52,7 @@ flowchart LR
 | **Test** | `mvn test -B`; `post { always { junit 'target/surefire-reports/*.xml' } }`, JaCoCo report archived | A failing test makes Maven exit non-zero, so the build fails; results are published even on failure |
 | **Docker Build** | `docker build -t aarpeet/calculator-api:${BUILD_NUMBER} -t …:latest .` | Immutable build-number tag for traceability and rollback; `latest` for convenience |
 | **Push** | `echo $PSW \| docker login --password-stdin`, push both tags, `docker logout` in `post { always }` | Credentials only from the Jenkins store (`dockerhub-creds`, an access token); single-quoted `sh` keeps the secret out of Groovy interpolation and the log |
-| **Deploy** | `DOCKER_IMAGE=…:${BUILD_NUMBER} docker compose up -d --remove-orphans`, then up to 30 × 5 s polls of the app and proxy | The stage fails (dumping `compose ps` and logs) unless both `/actuator/health` = UP and `/api/v1/add?a=2&b=3` returns 5 |
+| **Deploy** | `DOCKER_IMAGE=…:${BUILD_NUMBER} docker compose up -d --remove-orphans`, then up to 30 × 5 s polls of the app and proxy | The stage fails (dumping `compose ps` and logs) unless `/actuator/health` = UP, `/api/v1/add?a=2&b=3` returns 5, **and** `/actuator/info` reports this run's build number, which proves the new container is serving traffic |
 
 Pipeline options: `disableConcurrentBuilds()`, `timestamps()`, 30-minute `timeout`, build discarder. The
 `post` block emails **success/failure** to the student via `emailext` (falling back to `mail`), with job name,

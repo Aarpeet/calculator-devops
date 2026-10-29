@@ -91,10 +91,14 @@ pipeline {
                     for attempt in $(seq 1 30); do
                         health=$(curl -fsS "http://localhost:${APP_HOST_PORT}/actuator/health" || true)
                         sum=$(curl -fsS "http://localhost:${PROXY_HOST_PORT}/api/v1/add?a=2&b=3" || true)
-                        if echo "$health" | grep -q '"status":"UP"' && echo "$sum" | grep -q '"result":5}'; then
+                        # The build number reported through the proxy proves the NEW container
+                        # is serving traffic, not a previous one that is still healthy
+                        info=$(curl -fsS "http://localhost:${PROXY_HOST_PORT}/actuator/info" || true)
+                        if echo "$health" | grep -q '"status":"UP"' && echo "$sum" | grep -q '"result":5}' && echo "$info" | grep -q '"build":"'"${IMAGE_TAG}"'"'; then
                             echo "Deployment healthy after ${attempt} attempt(s)"
                             echo "  app   (:${APP_HOST_PORT}/actuator/health): $health"
                             echo "  proxy (:${PROXY_HOST_PORT}/api/v1/add?a=2&b=3): $sum"
+                            echo "  info  (:${PROXY_HOST_PORT}/actuator/info): $info"
                             docker compose ps
                             exit 0
                         fi

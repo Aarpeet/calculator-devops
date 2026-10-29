@@ -279,8 +279,9 @@ automated mail relayed through Gmail, so a Gmail inbox is used as the recipient.
 - **Immutable tags**: each run pushes `aarpeet/calculator-api:<BUILD_NUMBER>` and `:latest`.
 - **Idempotent**: `disableConcurrentBuilds()`, a fixed Compose project, `--remove-orphans`;
   re-running only replaces the `calculator-app` container, and Nginx resolves it dynamically, so the proxy keeps working.
-- **Verified deploy**: the stage polls `:8082/actuator/health` and `:8081/api/v1/add?a=2&b=3` and fails
-  (dumping `docker compose ps` and logs) if the stack is not healthy within ~150s.
+- **Verified deploy**: the stage polls `:8082/actuator/health`, `:8081/api/v1/add?a=2&b=3` and
+  `:8081/actuator/info` (which must report this run's build number, proving the new container is live) and
+  fails, dumping `docker compose ps` and logs, if that doesn't happen within ~150s.
 
 ---
 
