@@ -240,8 +240,14 @@ the token is masked in the console log and `docker logout` always runs after the
   SMTP server `smtp.gmail.com`, port `465`, *Use SSL*, credentials = Gmail address + **App Password**
   (or your institute SMTP relay). Use *Test configuration* to send a test mail.
 
-Notifications go to `Aarpeet.Chandrasekhar@iiitb.ac.in` on every success and failure and include the job name,
-build number and build URL.
+Notifications go to `Aarpeet135@gmail.com` on every success and failure and include the job name,
+build number and build URL. (The institute mailbox is hosted on Microsoft 365, which tends to quarantine
+automated mail relayed through Gmail, so a Gmail inbox is used as the recipient.)
+
+> **Debugging email:** email-ext does not print SMTP failures in normal mode, so a build log showing only
+> `Sending email to: …` does not prove delivery. Enable *Extended E-mail Notification → Enable Debug Mode*
+> to log the SMTP conversation; `535-5.7.8 Username and Password not accepted` means the credential holds
+> the normal Gmail password instead of an App Password.
 
 ### 5. Create the pipeline job
 

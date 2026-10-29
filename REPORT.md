@@ -94,6 +94,7 @@ the three newest image tags on the host.
 | 5 | **Resource-exhaustion input**: `a=1e999999999` parses as a valid `BigDecimal` but would expand to a billion digits when rendered. | Operand magnitude bounded to `[1e-100, 1e100]` (`IllegalArgumentException` → HTTP 400), with tests. |
 | 6 | **Secrets in CI**: Groovy-interpolated credentials leak into process lists and logs. | `credentials()` binding, single-quoted `sh`, `--password-stdin`, `docker logout` in `post { always }`, an access token instead of the password, and `.gitignore` for `.env`/keys. |
 | 7 | **Jenkins execution context**: steps run as the `jenkins` user under `/bin/sh` (dash), not bash. | `jenkins` added to the `docker` group; all `sh` blocks are POSIX and were tested under `/bin/sh -xe`, including the failure path (exit 1 with diagnostics). The Jenkinsfile was checked with Jenkins' declarative linter. |
+| 8 | **Silent email failure**: build #1 logged only `Sending email to: …`, but no mail arrived. email-ext hides SMTP errors outside debug mode, and the institute mailbox (Microsoft 365) filters Gmail-relayed automation. | Enabled email-ext debug mode, which exposed Gmail's `535-5.7.8 Username and Password not accepted`. Fixed by storing a Gmail **App Password** (2-Step Verification) in the `gmail-smtp` credential, and sent notifications to a Gmail inbox. |
 
 ## 6. Live Demo Checklist (Class 17) and Screenshot Guide
 
