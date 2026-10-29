@@ -30,7 +30,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
         APP_HOST_PORT         = "8082"    // calculator-app host port (Jenkins itself owns 8080)
         PROXY_HOST_PORT       = "8081"    // nginx-proxy host port
-        NOTIFY_EMAIL          = "Aarpeet.Chandrasekhar@iiitb.ac.in"
+        NOTIFY_EMAIL          = "Aarpeet135@gmail.com"
     }
 
     stages {
