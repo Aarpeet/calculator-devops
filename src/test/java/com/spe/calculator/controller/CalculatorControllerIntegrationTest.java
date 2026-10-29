@@ -108,6 +108,16 @@ class CalculatorControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /actuator/info exposes the app name, build number and Maven version")
+    void info() throws Exception {
+        mockMvc.perform(get("/actuator/info"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.app.name").value("calculator-api"))
+                .andExpect(jsonPath("$.app.build").value("local"))
+                .andExpect(jsonPath("$.build.version").value("1.0.0"));
+    }
+
+    @Test
     @DisplayName("division by zero returns HTTP 400 with error JSON")
     void divideByZero() throws Exception {
         assertBadRequest(call("divide", "10", "0"), "Division by zero is not allowed");

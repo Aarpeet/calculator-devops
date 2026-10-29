@@ -108,6 +108,7 @@ and numbers are rendered cleanly (`5`, not `5.0`; `0.3`, not `0.3000000000000000
 | Multiply | `/api/v1/multiply?a=&b=` | `a * b` |
 | Divide | `/api/v1/divide?a=&b=` | `a / b` (34 significant digits for non-terminating results) |
 | Health | `/actuator/health` | `UP` / `DOWN` |
+| Info | `/actuator/info` | App name, Jenkins build number, Maven version and build time |
 
 The examples below go through the Nginx proxy (`:8081`). The app is also reachable directly on `:8082`
 (Compose) or `:8080` (plain `java -jar`).
@@ -132,7 +133,13 @@ $ curl "http://localhost:8081/api/v1/add?a=0.1&b=0.2"
 
 $ curl "http://localhost:8081/actuator/health"
 {"status":"UP","groups":["liveness","readiness"]}
+
+$ curl "http://localhost:8081/actuator/info"
+{"app":{"name":"calculator-api","build":"5"},"build":{"artifact":"calculator-api","name":"calculator-api","time":"2026-10-29T22:40:12.345Z","version":"1.0.0","group":"com.spe"}}
 ```
+
+`app.build` is the Jenkins build number baked into the image (`local` for builds outside Jenkins), so you can
+tell which pipeline run is currently deployed.
 
 ### Error cases (HTTP 400, structured JSON)
 
