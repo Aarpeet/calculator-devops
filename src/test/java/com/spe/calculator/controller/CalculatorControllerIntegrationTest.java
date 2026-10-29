@@ -134,13 +134,14 @@ class CalculatorControllerIntegrationTest {
     @DisplayName("missing parameter returns HTTP 400 with error JSON")
     void missingParameter() throws Exception {
         assertBadRequest(mockMvc.perform(get("/api/v1/add").param("a", "2")),
-                "Required query parameter 'b' is missing or empty");
+                "Missing or empty query parameter 'b' (usage: /api/v1/add?a=<number>&b=<number>)");
     }
 
     @Test
     @DisplayName("empty parameter returns HTTP 400 with error JSON")
     void emptyParameter() throws Exception {
-        assertBadRequest(call("subtract", "", "3"), "Required query parameter 'a' is missing or empty");
+        assertBadRequest(call("subtract", "", "3"),
+                "Missing or empty query parameter 'a' (usage: /api/v1/subtract?a=<number>&b=<number>)");
     }
 
     @Test
