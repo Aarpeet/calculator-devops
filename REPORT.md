@@ -1,7 +1,7 @@
 # CI/CD Pipeline for a Calculator REST API — Mini-Project Report
 
-**Course:** CSE 816 Software Production Engineering (M.Tech CSE, Term I 2026-27) · **Faculty:** Prof. B. Thangaraju
-**Student:** Aarpeet Chandrasekhar · Aarpeet.Chandrasekhar@iiitb.ac.in
+**Course:** CSE 816 Software Production Engineering (iMTech CSE, Term I 2026-27) · **Faculty:** Prof. B. Thangaraju
+**Student:** Aarpeet Chandrasekhar (IMT2023011) · Aarpeet.Chandrasekhar@iiitb.ac.in
 **Repository:** https://github.com/Aarpeet/calculator-devops · **Image:** https://hub.docker.com/r/aarpeet/calculator-api
 
 ## 1. Overview
