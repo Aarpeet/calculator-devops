@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSE 816 Mini-Project Report: CI/CD Pipeline for a Calculator REST API</title>
+<meta name="author" content="Aarpeet Chandrasekhar">
+<style>
+@page {
+  size: A4;
+  margin: 14mm 15mm 15mm 15mm;
+  @top-left { content: "CSE 816 · Software Production Engineering"; font: 7pt "Noto Sans", sans-serif; color: #64748b; }
+  @top-right { content: "Mini-Project: CI/CD Pipeline for a Calculator REST API"; font: 7pt "Noto Sans", sans-serif; color: #64748b; }
+  @bottom-left { content: "Aarpeet Chandrasekhar · Roll No. IMT2023011"; font: 7pt "Noto Sans", sans-serif; color: #64748b; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7pt "Noto Sans", sans-serif; color: #64748b; }
+}
+@page :first { @top-left { content: none; } @top-right { content: none; } }
+html { font-family: "Noto Sans", "DejaVu Sans", sans-serif; font-size: 8.7pt; line-height: 1.36; color: #0f172a; }
+body { margin: 0; }
+h1 { font-size: 16.5pt; line-height: 1.15; margin: 0 0 1.2mm; color: #0b3b6f; }
+h2 { font-size: 11pt; color: #0b3b6f; border-bottom: 1.1pt solid #0b3b6f; padding-bottom: 0.8mm; margin: 3.4mm 0 1.6mm; break-after: avoid; }
+h3 { font-size: 9.2pt; color: #0b3b6f; margin: 2.4mm 0 1mm; break-after: avoid; }
+p { margin: 0 0 1.6mm; text-align: justify; }
+a { color: #0b5cad; text-decoration: none; }
+ul { margin: 0 0 1.8mm 0; padding-left: 4.2mm; }
+li { margin: 0 0 0.7mm; }
+code, .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 7.5pt; }
+code { background: #eef2f7; padding: 0 0.6mm; border-radius: 0.6mm; }
+table { border-collapse: collapse; width: 100%; font-size: 7.9pt; margin: 1.2mm 0 2.6mm; }
+th { background: #0b3b6f; color: #fff; text-align: left; padding: 1.1mm 1.5mm; font-weight: 600; }
+td { border-bottom: 0.5pt solid #cbd5e1; padding: 1mm 1.5mm; vertical-align: top; }
+tbody tr:nth-child(even) td { background: #f6f8fb; }
+table.fixed { table-layout: fixed; }
+tr { break-inside: avoid; }
+table.fixed td, table.fixed td code { overflow-wrap: anywhere; }
+.twocol { column-count: 2; column-gap: 6mm; }
+.twocol h3:first-child { margin-top: 0; }
+.twocol .colbreak { break-before: column; }
+td code, th code { font-size: 7.1pt; }
+.kicker { font-size: 8pt; letter-spacing: 0.04em; text-transform: uppercase; color: #475569; margin-bottom: 1mm; }
+.subtitle { font-size: 8.6pt; color: #334155; margin-bottom: 2.4mm; }
+.titlebar { border-left: 2.2mm solid #0b3b6f; padding: 0.5mm 0 0.5mm 3.5mm; margin-bottom: 2.5mm; }
+.meta { display: flex; gap: 6mm; font-size: 8.1pt; margin-bottom: 2.4mm; }
+.meta div { flex: 1; }
+.meta table { margin: 0; font-size: 8.1pt; }
+.meta td { border: none; padding: 0.25mm 2mm 0.25mm 0; background: none !important; }
+.meta td:first-child { color: #475569; white-space: nowrap; width: 22mm; }
+.todo { background: #fef08a; padding: 0 1mm; }
+.kpis { display: flex; gap: 1.8mm; margin: 0 0 2.4mm; }
+.kpi { flex: 1; border: 0.6pt solid #cbd5e1; border-radius: 1.4mm; padding: 1.3mm 1.8mm; background: #f6f8fb; }
+.kpi b { display: block; font-size: 11pt; color: #0b3b6f; line-height: 1.15; }
+.kpi span { font-size: 6.8pt; color: #475569; line-height: 1.2; display: block; }
+.cols { display: flex; gap: 5mm; }
+.cols > div { flex: 1; min-width: 0; }
+figure { margin: 0.6mm 0 1.8mm; break-inside: avoid; }
+figure.arch svg { width: 86%; display: block; margin: 0 auto; }
+figcaption { font-size: 7.4pt; color: #475569; margin-top: 0.8mm; text-align: center; }
+pre.term { background: #0f172a; color: #e2e8f0; font: 6.5pt/1.34 "DejaVu Sans Mono", monospace; padding: 2.2mm 2.8mm; border-radius: 1.4mm;
+           white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.8mm 0 2.4mm; }
+pre.term .p { color: #7dd3fc; }
+pre.term .ok { color: #86efac; }
+pre.term .bad { color: #fca5a5; }
+pre.term .dim { color: #94a3b8; }
+.ok { color: #15803d; font-weight: 700; }
+.bad { color: #b91c1c; font-weight: 700; }
+.small { font-size: 7.4pt; color: #475569; }
+.placeholder { border: 1.1pt dashed #94a3b8; background: #f8fafc; color: #64748b; height: 48mm; display: flex; align-items: center;
+               justify-content: center; text-align: center; font-size: 8pt; padding: 0 8mm; }
+img.shot { width: 100%; border: 0.5pt solid #cbd5e1; border-radius: 1mm; }
+.appendix-start { break-before: page; }
+.avoid { break-inside: avoid; }
+.legend { font-size: 7.2pt; color: #475569; }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="kicker">CSE 816 Software Production Engineering · Mini-Project Report</div>
+  <h1>End-to-End CI/CD Pipeline for a Calculator REST API</h1>
+  <div class="subtitle">Spring Boot 3 · Maven · JUnit 5 · Git/GitHub · Jenkins · Docker · Docker Hub · Docker Compose · Nginx</div>
+</div>
+
+<div class="meta">
+  <div><table>
+    <tr><td>Student</td><td><b>Aarpeet Chandrasekhar</b></td></tr>
+    <tr><td>Roll No.</td><td>IMT2023011</td></tr>
+    <tr><td>Email</td><td>Aarpeet.Chandrasekhar@iiitb.ac.in</td></tr>
+    <tr><td>Programme</td><td>iMTech CSE (Integrated M.Tech), Term I 2026-27</td></tr>
+  </table></div>
+  <div><table>
+    <tr><td>Faculty</td><td>Prof. B. Thangaraju</td></tr>
+    <tr><td>Repository</td><td><a href="https://github.com/Aarpeet/calculator-devops">github.com/Aarpeet/calculator-devops</a></td></tr>
+    <tr><td>Docker image</td><td><a href="https://hub.docker.com/r/aarpeet/calculator-api">hub.docker.com/r/aarpeet/calculator-api</a></td></tr>
+    <tr><td>Date</td><td>30 October 2026</td></tr>
+  </table></div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><b>6 / 6</b><span>pipeline stages automated, push to deploy</span></div>
+  <div class="kpi"><b>49 tests</b><span>JUnit 5 (unit + MockMvc), 100% passing</span></div>
+  <div class="kpi"><b>95.6%</b><span>line coverage; 100% branch (JaCoCo)</span></div>
+  <div class="kpi"><b>15 builds</b><span>13 started automatically by commits; 1 deliberately red</span></div>
+  <div class="kpi"><b>7 PRs</b><span>27 commits, feature branches merged to <code>main</code></span></div>
+  <div class="kpi"><b>2 containers</b><span>API + Nginx proxy, both <i>healthy</i></span></div>
+</div>
+
+<h2>1. Overview</h2>
+<p>A production-style calculator REST service wrapped in a fully automated delivery pipeline. Every commit pushed (or pull request
+merged) to <code>main</code> is checked out by Jenkins, compiled, unit- and integration-tested, packaged into a hardened multi-stage Docker image,
+published to Docker Hub under an immutable build-number tag, and deployed as a two-container Compose stack (the API behind an Nginx proxy).
+A deployment is accepted only once the <i>new</i> build is proven healthy and serving traffic, and every run ends with an email.
+Nothing after <code>git push</code> is manual: builds #3 to #15 (Appendix B) were all started by commits.</p>
+
+<h2>2. Pipeline &amp; Deployment Architecture</h2>
+<figure class="arch">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 392" font-family="Noto Sans, DejaVu Sans, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+    </marker>
+  </defs>
+
+  <!-- Row 1: source control -->
+  <rect x="12" y="12" width="128" height="48" rx="7" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.4"/>
+  <text x="76" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="#1e1b4b">Developer</text>
+  <text x="76" y="49" text-anchor="middle" font-size="10.5" fill="#334155">git push · PR merge</text>
+
+  <line x1="140" y1="36" x2="186" y2="36" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <rect x="188" y="12" width="232" height="48" rx="7" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.4"/>
+  <text x="304" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="#1e1b4b">GitHub</text>
+  <text x="304" y="49" text-anchor="middle" font-size="10.5" fill="#334155">Aarpeet/calculator-devops · main + feature/*</text>
+
+  <line x1="304" y1="60" x2="304" y2="98" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="312" y="80" font-size="10.5" fill="#334155">GitHub webhook (githubPush) · Poll SCM H/5 fallback</text>
+
+  <rect x="604" y="12" width="244" height="48" rx="7" fill="#fff1f2" stroke="#e11d48" stroke-width="1.4"/>
+  <text x="726" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4c0519">Jenkins credentials store</text>
+  <text x="726" y="49" text-anchor="middle" font-size="10.5" fill="#334155">dockerhub-creds · gmail-smtp (masked)</text>
+
+  <!-- Jenkins pipeline -->
+  <rect x="12" y="100" width="836" height="112" rx="9" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.4"/>
+  <text x="24" y="118" font-size="12" font-weight="700" fill="#0f172a">Jenkins: declarative Jenkinsfile</text>
+  <text x="232" y="118" font-size="10.5" fill="#475569">disableConcurrentBuilds · timestamps · timeout 30 min</text>
+
+  <line x1="726" y1="60" x2="660" y2="128" stroke="#b45309" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+
+  <g font-size="10.2" fill="#334155" text-anchor="middle">
+    <rect x="24" y="130" width="124" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="86" y="150" font-size="12" font-weight="700" fill="#0c4a6e">1 Checkout</text>
+    <text x="86" y="168">checkout scm</text>
+    <text x="86" y="183">triggering commit</text>
+
+    <rect x="161" y="130" width="124" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="223" y="150" font-size="12" font-weight="700" fill="#0c4a6e">2 Build</text>
+    <text x="223" y="168">mvn clean package</text>
+    <text x="223" y="183">-DskipTests → JAR</text>
+
+    <rect x="298" y="130" width="124" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="360" y="150" font-size="12" font-weight="700" fill="#0c4a6e">3 Test</text>
+    <text x="360" y="168">mvn test (unit+IT)</text>
+    <text x="360" y="183">fail build on failure</text>
+
+    <rect x="435" y="130" width="124" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="497" y="150" font-size="12" font-weight="700" fill="#0c4a6e">4 Docker Build</text>
+    <text x="497" y="168">multi-stage image</text>
+    <text x="497" y="183">tags :N and :latest</text>
+
+    <rect x="572" y="130" width="124" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="634" y="150" font-size="12" font-weight="700" fill="#0c4a6e">5 Push</text>
+    <text x="634" y="168">login --password-stdin</text>
+    <text x="634" y="183">push :N, :latest</text>
+
+    <rect x="709" y="130" width="127" height="70" rx="6" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.3"/>
+    <text x="772" y="150" font-size="12" font-weight="700" fill="#0c4a6e">6 Deploy</text>
+    <text x="772" y="168">compose up -d</text>
+    <text x="772" y="183">verify health + build N</text>
+  </g>
+  <g stroke="#334155" stroke-width="1.5" marker-end="url(#a)">
+    <line x1="148" y1="165" x2="159" y2="165"/>
+    <line x1="285" y1="165" x2="296" y2="165"/>
+    <line x1="422" y1="165" x2="433" y2="165"/>
+    <line x1="559" y1="165" x2="570" y2="165"/>
+    <line x1="696" y1="165" x2="707" y2="165"/>
+  </g>
+
+  <!-- Row 3: outputs -->
+  <line x1="86" y1="212" x2="86" y2="250" stroke="#b45309" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+  <rect x="12" y="252" width="176" height="66" rx="7" fill="#fefce8" stroke="#ca8a04" stroke-width="1.4"/>
+  <text x="100" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#422006">Email (emailext)</text>
+  <text x="100" y="289" text-anchor="middle" font-size="10.2" fill="#334155">post: SUCCESS / FAILURE</text>
+  <text x="100" y="304" text-anchor="middle" font-size="10.2" fill="#334155">job · build # · URL · log</text>
+
+  <line x1="360" y1="200" x2="300" y2="250" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="204" y="252" width="176" height="66" rx="7" fill="#f1f5f9" stroke="#64748b" stroke-width="1.4"/>
+  <text x="292" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#0f172a">Test reports</text>
+  <text x="292" y="289" text-anchor="middle" font-size="10.2" fill="#334155">JUnit XML published</text>
+  <text x="292" y="304" text-anchor="middle" font-size="10.2" fill="#334155">JaCoCo coverage archived</text>
+
+  <line x1="634" y1="200" x2="498" y2="250" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="396" y="252" width="190" height="66" rx="7" fill="#dbeafe" stroke="#2563eb" stroke-width="1.4"/>
+  <text x="491" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#172554">Docker Hub</text>
+  <text x="491" y="289" text-anchor="middle" font-size="10.2" fill="#334155">aarpeet/calculator-api</text>
+  <text x="491" y="304" text-anchor="middle" font-size="10.2" fill="#334155">tag per build · failed builds: none</text>
+
+  <line x1="772" y1="200" x2="772" y2="232" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="600" y="234" width="248" height="152" rx="9" fill="#ecfdf5" stroke="#059669" stroke-width="1.4"/>
+  <text x="612" y="251" font-size="11.5" font-weight="700" fill="#064e3b">Docker host · Compose project</text>
+  <text x="612" y="265" font-size="10" fill="#334155">network calc-net (bridge)</text>
+
+  <rect x="612" y="274" width="104" height="70" rx="6" fill="#d1fae5" stroke="#047857" stroke-width="1.3"/>
+  <text x="664" y="292" text-anchor="middle" font-size="11.2" font-weight="700" fill="#064e3b">nginx-proxy</text>
+  <text x="664" y="308" text-anchor="middle" font-size="9.6" fill="#334155">nginx:stable-alpine</text>
+  <text x="664" y="323" text-anchor="middle" font-size="9.6" fill="#334155">client → :8081</text>
+  <text x="664" y="337" text-anchor="middle" font-size="9.6" fill="#334155">(container :80)</text>
+
+  <line x1="716" y1="309" x2="730" y2="309" stroke="#334155" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="732" y="274" width="104" height="70" rx="6" fill="#d1fae5" stroke="#047857" stroke-width="1.3"/>
+  <text x="784" y="292" text-anchor="middle" font-size="11.2" font-weight="700" fill="#064e3b">calculator-app</text>
+  <text x="784" y="308" text-anchor="middle" font-size="9.6" fill="#334155">calculator-api:N</text>
+  <text x="784" y="323" text-anchor="middle" font-size="9.6" fill="#334155">direct → :8082</text>
+  <text x="784" y="337" text-anchor="middle" font-size="9.6" fill="#334155">(container :8080)</text>
+
+  <text x="724" y="362" text-anchor="middle" font-size="9.6" fill="#334155">healthchecks · restart unless-stopped</text>
+  <text x="724" y="377" text-anchor="middle" font-size="9.6" fill="#334155">read-only FS · CPU/mem limits · log rotation</text>
+
+  <text x="12" y="350" font-size="10" fill="#475569">Deploy passes only when /actuator/health = UP (:8082),</text>
+  <text x="12" y="365" font-size="10" fill="#475569">add?a=2&amp;b=3 = 5 through the proxy (:8081), and /actuator/info</text>
+  <text x="12" y="380" font-size="10" fill="#475569">reports build N; otherwise the stage fails with diagnostics.</text>
+</svg>
+
+<figcaption>Figure 1: Pipeline and deployment architecture. Solid arrows show the build and deploy flow; dashed arrows show credentials and notifications.</figcaption>
+</figure>
+<p>Jenkins runs natively on the same Linux host and owns port 8080, so the API container (which still listens on 8080 internally:
+<code>EXPOSE</code>, health check and proxy upstream are unchanged) is published on host port <b>8082</b>, and the Nginx proxy on <b>8081</b>.
+Both containers share the custom bridge network <code>calc-net</code>; Nginx reaches the API by its service name <code>calculator-app</code>.</p>
+
+<h2>3. Jenkins CI/CD Pipeline (declarative <code>Jenkinsfile</code>)</h2>
+<table class="fixed">
+  <colgroup><col style="width:17mm"><col style="width:76mm"><col></colgroup>
+  <thead><tr><th>Stage</th><th>Implementation</th><th>What it guarantees</th></tr></thead>
+  <tbody>
+  <tr><td><b>1 Checkout</b></td><td><code>checkout scm</code></td><td>Builds exactly the commit that triggered the run; its SHA (<code>GIT_COMMIT</code>) is later stamped into the image.</td></tr>
+  <tr><td><b>2 Build</b></td><td><code>mvn clean package -DskipTests -B</code></td><td>Fast compile and packaging feedback; produces the executable Spring Boot JAR.</td></tr>
+  <tr><td><b>3 Test</b></td><td><code>mvn test -B</code>; <code>post { always { junit 'target/surefire-reports/*.xml' } }</code>; JaCoCo report archived</td><td>Any failing test makes Maven exit non-zero, which <b>fails the stage and the build</b>; the results are still published (see the red build #11).</td></tr>
+  <tr><td><b>4 Docker Build</b></td><td><code>docker build --pull --build-arg BUILD_NUMBER/VCS_REF/BUILD_DATE -t aarpeet/calculator-api:${BUILD_NUMBER} -t …:latest .</code></td><td>Immutable tag per build for traceability and rollback; <code>--pull</code> picks up patched base images.</td></tr>
+  <tr><td><b>5 Push</b></td><td><code>echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin</code>; push <code>:N</code> and <code>:latest</code>; <code>docker logout</code> in <code>post { always }</code></td><td>Credentials come only from the Jenkins store (<code>credentials('dockerhub-creds')</code>, an access token). Single-quoted <code>sh</code> keeps Groovy from interpolating the secret, and it is masked in the log.</td></tr>
+  <tr><td><b>6 Deploy</b></td><td><code>DOCKER_IMAGE=…:${BUILD_NUMBER} docker compose up -d --remove-orphans</code>; recreate <code>nginx-proxy</code> only if <code>nginx.conf</code> changed; poll up to 30 × 5 s</td><td>Passes only when <code>/actuator/health</code> is UP (:8082), <code>/api/v1/add?a=2&amp;b=3</code> returns 5 <i>through the proxy</i> (:8081), <b>and</b> <code>/actuator/info</code> reports this build number, which proves the new container serves traffic. Otherwise it prints <code>compose ps</code>/logs and fails.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><b>Automatic triggering:</b> <code>triggers { githubPush(); pollSCM('H/5 * * * *') }</code>. A GitHub webhook (push events → <code>/github-webhook/</code>
+      through an ngrok static-domain tunnel to the Jenkins host) starts a build within seconds: build #15 began 8 s after its push (Appendix C.7).
+      Polling every five minutes is the fallback whenever the tunnel is down; it started builds #3–#14.</li>
+  <li><b>Notifications:</b> <code>post { success {…} failure {…} }</code> calls <code>emailext</code> (falling back to <code>mail</code>) through Gmail SMTP,
+      with job name, build number, image tag, duration and build URL. The failure mail attaches the console log.</li>
+  <li><b>Re-runnable and idempotent:</b> <code>disableConcurrentBuilds()</code>, a fixed Compose project name, immutable tags and <code>--remove-orphans</code>.
+      Re-deploying the same tag is a no-op, and a new tag replaces only <code>calculator-app</code> while Nginx keeps serving. A cleanup step keeps the three newest tags on the host;
+      <code>timestamps()</code>, a 30-minute <code>timeout</code> and log rotation are enabled.</li>
+</ul>
+
+<h2>4. Containerisation and Deployment</h2>
+<div class="twocol">
+<h3>Multi-stage <code>Dockerfile</code></h3>
+<ul>
+  <li><b>Builder</b> (<code>maven:3.9-eclipse-temurin-17-alpine</code>): copies <code>pom.xml</code> first and runs <code>mvn dependency:go-offline</code>,
+      giving a dependency layer that is reused until the POM changes (verified: a source-only change re-runs just <code>COPY src</code> + <code>package</code>).
+      It then copies <code>src/</code> and runs <code>mvn clean package -DskipTests</code>.</li>
+  <li><b>Runtime</b> (<code>eclipse-temurin:17-jre-alpine</code>, JRE only, no JDK or Maven): <code>curl</code> for health checks; dedicated non-root
+      <code>appuser:appgroup</code>; <i>only</i> the JAR is copied (root-owned and read-only to the app); <code>EXPOSE 8080</code>;
+      <code>HEALTHCHECK</code> on <code>/actuator/health</code>; exec-form <code>ENTRYPOINT ["java","-jar","/app/app.jar"]</code> so the JVM is PID 1 and shuts down gracefully on SIGTERM;
+      <code>-XX:MaxRAMPercentage=75</code> respects container memory limits.</li>
+  <li>Per-build values are declared <i>last</i> (cache-friendly): <code>BUILD_NUMBER</code> → <code>/actuator/info</code>, plus OCI
+      <code>version</code>/<code>revision</code>/<code>created</code> labels.</li>
+  <li><code>.dockerignore</code> limits the context to <code>pom.xml</code> + <code>src/</code>. The image is ≈90 MB compressed and runs with a single
+      <code>docker run -p 8082:8080 aarpeet/calculator-api</code>.</li>
+</ul>
+<h3 class="colbreak"><code>docker-compose.yml</code> + Nginx</h3>
+<ul>
+  <li><b>calculator-app:</b> image <code>${DOCKER_IMAGE:-aarpeet/calculator-api:latest}</code> with <code>build: .</code> fallback;
+      <code>SPRING_PROFILES_ACTIVE=prod</code>, <code>SERVER_PORT=8080</code>; health check <code>curl /actuator/health</code>
+      (10 s / 5 s / 5 retries / 20 s start period); <code>restart: unless-stopped</code>.</li>
+  <li><b>nginx-proxy</b> (second component): <code>nginx:stable-alpine</code>, <code>nginx.conf</code> mounted read-only, <code>8081:80</code>,
+      <code>depends_on: calculator-app: condition: service_healthy</code>, its own health check.</li>
+  <li><b>Network</b> <code>calc-net</code> (custom bridge). A single <code>docker compose up -d</code> starts the whole stack.</li>
+  <li><b>Hardening:</b> read-only root filesystems (<code>tmpfs</code> only where needed), <code>no-new-privileges</code>, limits
+      (API 512 MB / 1 CPU, proxy 64 MB / 0.5 CPU), log rotation (3 × 10 MB), 30 s stop grace period.</li>
+  <li><b>Nginx:</b> per-request DNS via Docker's resolver (survives container IP changes), security headers, rate limiting
+      (20 req/s, burst 40 → HTTP 429), and JSON bodies for proxy errors (429/503).</li>
+</ul>
+</div>
+
+<h2>5. Application and Testing</h2>
+<table class="fixed">
+  <colgroup><col style="width:52mm"><col></colgroup>
+  <thead><tr><th>Request</th><th>Response</th></tr></thead>
+  <tbody>
+  <tr><td><code>GET /api/v1/add?a=10&amp;b=5</code></td><td><code>{"operation":"add","a":10,"b":5,"result":15}</code></td></tr>
+  <tr><td><code>/subtract</code> · <code>/multiply</code> · <code>/divide?a=10&amp;b=4</code></td><td><code>"result":5</code> · <code>"result":50</code> · <code>"result":2.5</code> (same JSON shape)</td></tr>
+  <tr><td><code>GET /api/v1/divide?a=10&amp;b=0</code></td><td><b>400</b> <code>{"error":"Division by zero is not allowed","status":400,"timestamp":"…"}</code></td></tr>
+  <tr><td><code>GET /api/v1/add?a=abc&amp;b=5</code></td><td><b>400</b> <code>{"error":"Invalid value 'abc' for query parameter 'a': must be a number",…}</code></td></tr>
+  <tr><td><code>GET /actuator/health</code> · <code>/actuator/info</code></td><td><code>{"status":"UP",…}</code> · <code>{"app":{"name":"calculator-api","build":"N"},"build":{"version":"1.0.0",…}}</code></td></tr>
+  </tbody>
+</table>
+<div class="twocol">
+<ul>
+  <li><b>Design:</b> Spring Boot 3.5 / Java 17, layered controller → service. <code>BigDecimal</code> gives exact results (0.1 + 0.2 = 0.3) rendered as clean numbers (5, 2.5).</li>
+  <li><b>Validation:</b> a <code>@ControllerAdvice</code> maps <code>MissingServletRequestParameterException</code>, <code>MethodArgumentTypeMismatchException</code>
+      and <code>ArithmeticException</code>/<code>IllegalArgumentException</code> to HTTP 400 with <code>{error, status, timestamp}</code>. Operands are bounded to
+      [1e-100, 1e100] so input like <code>1e999999999</code> cannot exhaust memory.</li>
+  <li><b>Tests</b> (<code>mvn test</code> → JUnit XML in <code>target/surefire-reports</code>): <code>CalculatorServiceTest</code>, 33 parameterised unit tests
+      (every operation, negatives, decimals, zero, non-terminating division, divide-by-zero, range); <code>CalculatorControllerIntegrationTest</code>,
+      16 <code>@SpringBootTest</code> + MockMvc tests (all endpoints, health/info, byte-exact JSON, every 400 case).</li>
+  <li><b>Coverage</b> (JaCoCo): 95.6% line, 100% branch, 97.8% instruction. Only <code>main()</code> is uncovered.</li>
+</ul>
+</div>
+
+<h2>6. Version Control Practices (Git / GitHub)</h2>
+<ul>
+  <li><b>Public repository</b> with a complete README (build, test, run, API examples, Docker/Compose, Jenkins setup, operations runbook).</li>
+  <li><b>Progressive history:</b> 27 commits on <code>main</code> between 27 Oct 2026 and 30 Oct 2026. Features were developed on 7 branches and merged through
+      pull requests with merge commits (#1–#7); small follow-up fixes were committed directly to <code>main</code>. See the graph in Appendix C.6.</li>
+  <li><b>Hygiene:</b> <code>.gitignore</code> excludes <code>target/</code>, IDE files, <code>.env</code>, keys and keystores. No credentials are in the repository:
+      the Docker Hub token and Gmail App Password live only in the Jenkins credentials store, and Jenkins itself requires authentication.</li>
+</ul>
+
+<h2>7. Challenges Faced and Solutions</h2>
+<table class="fixed">
+  <colgroup><col style="width:8mm"><col style="width:46%"><col></colgroup>
+  <thead><tr><th>#</th><th>Challenge</th><th>Engineering solution</th></tr></thead>
+  <tbody>
+  <tr><td>1</td><td><b>Port clash:</b> Jenkins runs natively on host port 8080, so the API cannot publish <code>8080:8080</code>.</td><td>The container still listens on 8080; only the host mapping changed to <code>${APP_HOST_PORT:-8082}:8080</code>, and the proxy runs on 8081.</td></tr>
+  <tr><td>2</td><td><b>Stale proxy after redeploy:</b> Nginx resolves upstream names once at start-up; a recreated API container with a new IP would give 502s.</td><td><code>resolver 127.0.0.11</code> + <code>proxy_pass</code> through a variable forces per-request DNS. Verified by forcing the API IP to change (.2 → .4) with no proxy restart.</td></tr>
+  <tr><td>3</td><td><b>Idempotent deploys from two places:</b> the Jenkins workspace and a developer checkout would create two Compose projects fighting over ports.</td><td>Fixed Compose project name, <code>disableConcurrentBuilds()</code>, immutable tags; a re-run with the same tag is a verified no-op.</td></tr>
+  <tr><td>4</td><td><b>Clean numeric output:</b> <code>double</code> gives 0.30000000000000004 and 5.0; <code>stripTrailingZeros()</code> gives <code>1E+1</code>.</td><td><code>BigDecimal</code>, normalised scale, Jackson <code>WRITE_BIGDECIMAL_AS_PLAIN</code>; byte-exact JSON asserted in tests.</td></tr>
+  <tr><td>5</td><td><b>Resource-exhaustion input:</b> <code>a=1e999999999</code> parses as a valid <code>BigDecimal</code> but would expand to a billion digits.</td><td>Operand magnitude bounded to [1e-100, 1e100] → HTTP 400, covered by unit and integration tests.</td></tr>
+  <tr><td>6</td><td><b>Secrets in CI:</b> Groovy-interpolated credentials leak into process lists and logs.</td><td><code>credentials()</code> binding, single-quoted <code>sh</code>, <code>--password-stdin</code>, <code>docker logout</code> in <code>post { always }</code>, access tokens instead of passwords.</td></tr>
+  <tr><td>7</td><td><b>Jenkins execution context:</b> steps run as user <code>jenkins</code> under <code>/bin/sh</code> (dash), initially without Docker access.</td><td><code>jenkins</code> added to the <code>docker</code> group; POSIX <code>sh</code> blocks tested under <code>/bin/sh -xe</code> (incl. failure path); Jenkinsfile linted.</td></tr>
+  <tr><td>8</td><td><b>Silent email failure:</b> the log said <code>Sending email to: …</code> but nothing arrived, because email-ext hides SMTP errors outside debug mode.</td><td>Debug mode exposed Gmail's <code>535-5.7.8</code> login rejection; fixed with a Gmail App Password, and the recipient moved to Gmail because the institute's Microsoft 365 mailbox filtered the mails.</td></tr>
+  <tr><td>9</td><td><b>Proxy config never went live:</b> after a green build the new Nginx headers were missing; a single-file bind mount pins the file that existed at container start, and <code>git checkout</code> replaces it.</td><td>The Deploy stage compares the config inside the container with the checked-out file and recreates <i>only</i> <code>nginx-proxy</code> when they differ; re-runs stay no-ops.</td></tr>
+  <tr><td>10</td><td><b>Exposed CI server:</b> anonymous users held the Jenkins admin role, which through a public webhook tunnel would allow remote code execution.</td><td>Role-based authorisation locked down: admin only for the owner's account, no anonymous permissions; only <code>/github-webhook/</code> stays open.</td></tr>
+  </tbody>
+</table>
+
+<h2>8. Conclusion</h2>
+<p>All six required stages run automatically on every change, with published test results, credentials kept out of the code, verified
+deployments and email notifications. The pipeline ran end to end 15 times, including a deliberately failing commit that was stopped at the
+Test stage without affecting the running service. The Capstone will extend this pipeline with Ansible, Kubernetes and Prometheus/Grafana.</p>
+
+<!-- ============================ APPENDICES ============================ -->
+<div class="appendix-start"></div>
+<h2>Appendix A: Rubric Compliance Matrix</h2>
+<table class="fixed">
+  <colgroup><col style="width:40mm"><col><col style="width:24mm"></colgroup>
+  <thead><tr><th>Criterion (marks)</th><th>How it is met</th><th>Evidence</th></tr></thead>
+  <tbody>
+  <tr><td><b>Spring Boot API + JUnit tests</b> (2.0)</td><td>4 operations + Actuator health; JSON responses; validation through <code>@ControllerAdvice</code> (400 for missing/invalid input and divide-by-zero);
+      49 tests (unit for every operation including divide-by-zero; MockMvc integration hitting real endpoints); 95.6% line coverage; JUnit XML published by Jenkins.</td><td>§5, C.2, C.5</td></tr>
+  <tr><td><b>Git/GitHub practices</b> (1.0)</td><td>Public repository with a complete README; 27 progressive commits; 7 feature branches merged via pull requests; <code>.gitignore</code>; no secrets in the repository.</td><td>§6, C.6, D</td></tr>
+  <tr><td><b>Jenkins CI/CD pipeline</b> (3.0)</td><td>Declarative <code>Jenkinsfile</code> with all six stages; auto-trigger on every push (GitHub webhook via <code>githubPush()</code>, Poll SCM fallback); JUnit publishing; build fails on test failure (#11);
+      Docker Hub push with Jenkins-managed credentials; Compose deploy with health verification; email on success and failure; idempotent re-runs.</td><td>§3, B, C.3, C.4, D</td></tr>
+  <tr><td><b>Dockerfile</b> (1.5)</td><td>Multi-stage (Maven/JDK → slim JRE, JAR only); minimal Alpine base, non-root user, explicit <code>EXPOSE</code>, cached dependency layer,
+      <code>.dockerignore</code>, health check; runnable with a single <code>docker run</code>.</td><td>§4</td></tr>
+  <tr><td><b>Docker Compose deployment</b> (1.5)</td><td>API + Nginx reverse proxy (second component); custom network; health check on <code>/actuator/health</code>; restart policy; environment variables;
+      one <code>docker compose up</code> launches the full stack.</td><td>§4, C.1, C.2</td></tr>
+  <tr><td><b>Report, screenshots, demo</b> (1.0)</td><td>This report (architecture, stage descriptions, challenges); screenshots of the green pipeline, emails, <code>docker ps</code> and API responses; live demo of push to deploy.</td><td>§1 to §8, C, D</td></tr>
+  </tbody>
+</table>
+
+<h2>Appendix B: Jenkins Build History</h2>
+<table class="fixed"><colgroup><col style="width:6mm"><col style="width:22mm"><col style="width:17mm"><col><col style="width:11mm"><col style="width:13mm"><col style="width:10mm"><col style="width:16mm"><col style="width:10mm"></colgroup><thead><tr><th>#</th><th>Started</th><th>Trigger</th><th>Change built</th><th>Tests</th><th>Deploy</th><th>Email</th><th>Result</th><th>Time</th></tr></thead><tbody>
+<tr><td>1</td><td style="white-space:nowrap">30 Oct 03:42</td><td>Manual</td><td>First run on <code>main</code> (manual start registers the triggers)</td><td>48/48</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>135 s</td></tr>
+<tr><td>2</td><td style="white-space:nowrap">30 Oct 03:47</td><td>Manual</td><td>Manual re-run with SMTP debug logging (email diagnosis)</td><td>48/48</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>42 s</td></tr>
+<tr><td>3</td><td style="white-space:nowrap">30 Oct 03:54</td><td>Poll SCM</td><td>PR #3: send build notifications to a Gmail inbox</td><td>48/48</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>44 s</td></tr>
+<tr><td>4</td><td style="white-space:nowrap">30 Oct 04:04</td><td>Poll SCM</td><td>Rebuild of <code>main</code> (no code change)</td><td>48/48</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>46 s</td></tr>
+<tr><td>5</td><td style="white-space:nowrap">30 Oct 04:09</td><td>Poll SCM</td><td>PR #4: Expose build metadata on /actuator/info</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>92 s</td></tr>
+<tr><td>6</td><td style="white-space:nowrap">30 Oct 04:14</td><td>Poll SCM</td><td>PR #5: Verify the deployed build number in the Deploy stage</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>49 s</td></tr>
+<tr><td>7</td><td style="white-space:nowrap">30 Oct 04:19</td><td>Poll SCM</td><td>PR #6: Label images with OCI version, revision and build time</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>45 s</td></tr>
+<tr><td>8</td><td style="white-space:nowrap">30 Oct 04:24</td><td>Poll SCM</td><td>PR #7: Harden the Compose deployment</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>43 s</td></tr>
+<tr><td>9</td><td style="white-space:nowrap">30 Oct 04:29</td><td>Poll SCM</td><td>Harden the Nginx reverse proxy</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>45 s</td></tr>
+<tr><td>10</td><td style="white-space:nowrap">30 Oct 04:34</td><td>Poll SCM</td><td>Apply nginx.conf changes on deploy</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>45 s</td></tr>
+<tr><td>11</td><td style="white-space:nowrap">30 Oct 04:39</td><td>Poll SCM</td><td>Show expected usage in missing-parameter errors</td><td><span class="bad">47/49</span></td><td><span class="bad">skipped</span></td><td>sent</td><td><span class="bad">FAILURE</span></td><td>19 s</td></tr>
+<tr><td>12</td><td style="white-space:nowrap">30 Oct 04:44</td><td>Poll SCM</td><td>Update integration tests for the new missing-parameter message</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>57 s</td></tr>
+<tr><td>13</td><td style="white-space:nowrap">30 Oct 05:04</td><td>Poll SCM</td><td>Add an operations runbook to the README and refresh the report summary</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>44 s</td></tr>
+<tr><td>14</td><td style="white-space:nowrap">30 Oct 05:14</td><td>Poll SCM</td><td>Add roll number and programme to the report summary</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>45 s</td></tr>
+<tr><td>15</td><td style="white-space:nowrap">30 Oct 05:23</td><td>Webhook</td><td>Document creating the GitHub webhook from the CLI and checking deliveries</td><td>49/49</td><td>verified</td><td>sent</td><td><span class="ok">SUCCESS</span></td><td>44 s</td></tr>
+</tbody></table>
+<p class="small">Docker Hub holds tags <code>1–10, 12–15</code> and <code>latest</code>. Build #11 is missing on purpose: it failed at the Test stage, so the pipeline never built or pushed an image, and the running deployment stayed on build 10.</p>
+
+<h2>Appendix C: Command-Line Evidence</h2>
+<h3>C.1 Running containers</h3>
+<pre class="term"><span class="p">$ docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"</span>
+NAMES            IMAGE                       STATUS                        PORTS
+calculator-app   aarpeet/calculator-api:15   Up About a minute <span class="ok">(healthy)</span>   0.0.0.0:8082-&gt;8080/tcp
+nginx-proxy      nginx:stable-alpine         Up 54 minutes <span class="ok">(healthy)</span>       0.0.0.0:8081-&gt;80/tcp</pre>
+<h3>C.2 API responses: direct (host 8082) and through the Nginx proxy (host 8081)</h3>
+<pre class="term"><span class="dim"># port 8082: calculator-app directly</span>
+<span class="p">$ curl -s 'localhost:8082/actuator/health'</span>
+{"status":"UP","groups":["liveness","readiness"]} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/add?a=10&amp;b=5'</span>
+{"operation":"add","a":10,"b":5,"result":15} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/subtract?a=10&amp;b=5'</span>
+{"operation":"subtract","a":10,"b":5,"result":5} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/multiply?a=10&amp;b=5'</span>
+{"operation":"multiply","a":10,"b":5,"result":50} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/divide?a=10&amp;b=4'</span>
+{"operation":"divide","a":10,"b":4,"result":2.5} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/divide?a=10&amp;b=0'</span>
+{"error":"Division by zero is not allowed","status":400,"timestamp":"2026-10-29T23:55:40.943814372Z"} <span class="bad">[400]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/add?a=abc&amp;b=5'</span>
+{"error":"Invalid value 'abc' for query parameter 'a': must be a number","status":400,"timestamp":"2026-10-29T23:55:40.952224205Z"} <span class="bad">[400]</span>
+<span class="p">$ curl -s 'localhost:8082/api/v1/add?a=2'</span>
+{"error":"Missing or empty query parameter 'b' (usage: /api/v1/add?a=&lt;number&gt;&amp;b=&lt;number&gt;)","status":400,"timestamp":"2026-10-29T23:55:40.961048241Z"} <span class="bad">[400]</span>
+<span class="dim"># port 8081: through nginx-proxy</span>
+<span class="p">$ curl -s 'localhost:8081/actuator/health'</span>
+{"status":"UP","groups":["liveness","readiness"]} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/add?a=10&amp;b=5'</span>
+{"operation":"add","a":10,"b":5,"result":15} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/subtract?a=10&amp;b=5'</span>
+{"operation":"subtract","a":10,"b":5,"result":5} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/multiply?a=10&amp;b=5'</span>
+{"operation":"multiply","a":10,"b":5,"result":50} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/divide?a=10&amp;b=4'</span>
+{"operation":"divide","a":10,"b":4,"result":2.5} <span class="ok">[200]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/divide?a=10&amp;b=0'</span>
+{"error":"Division by zero is not allowed","status":400,"timestamp":"2026-10-29T23:55:41.013703361Z"} <span class="bad">[400]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/add?a=abc&amp;b=5'</span>
+{"error":"Invalid value 'abc' for query parameter 'a': must be a number","status":400,"timestamp":"2026-10-29T23:55:41.022710921Z"} <span class="bad">[400]</span>
+<span class="p">$ curl -s 'localhost:8081/api/v1/add?a=2'</span>
+{"error":"Missing or empty query parameter 'b' (usage: /api/v1/add?a=&lt;number&gt;&amp;b=&lt;number&gt;)","status":400,"timestamp":"2026-10-29T23:55:41.031888929Z"} <span class="bad">[400]</span>
+<span class="p">$ curl -s localhost:8081/actuator/info</span>
+{"app":{"name":"calculator-api","build":"15"},"build":{"artifact":"calculator-api","name":"calculator-api","time":"2026-10-29T23:14:27.894Z","version":"1.0.0","group":"com.spe"}}</pre>
+<h3>C.3 Deploy-stage verification (console of build #15)</h3>
+<pre class="term">+ DOCKER_IMAGE=aarpeet/calculator-api:15 docker compose up -d --remove-orphans
+ Container nginx-proxy Running 
+ Container calculator-app Recreate 
+ Container calculator-app Recreated 
+ Container calculator-app Starting 
+ Container calculator-app Started 
+ Container calculator-app Waiting 
+ Container calculator-app Healthy 
+Verifying deployment of aarpeet/calculator-api:15 ...
+<span class="ok">Deployment healthy after 1 attempt(s)</span>
+  app   (:8082/actuator/health): {"status":"UP","groups":["liveness","readiness"]}
+  proxy (:8081/api/v1/add?a=2&amp;b=3): {"operation":"add","a":2,"b":3,"result":5}
+  info  (:8081/actuator/info): {"app":{"name":"calculator-api","build":"15"},"build":{"artifact":"calculator-api","name":"calculator-api","time":"2026-10-29T23:14:27.894Z","version":"1.0.0","group":"com.spe"}}
++ docker compose ps
+NAME             IMAGE                       COMMAND                  SERVICE          CREATED          STATUS                    PORTS
+calculator-app   aarpeet/calculator-api:15   "java -jar /app/app.…"   calculator-app   7 seconds ago    Up 5 seconds <span class="ok">(healthy)</span>    0.0.0.0:8082-&gt;8080/tcp, [::]:8082-&gt;8080/tcp
+nginx-proxy      nginx:stable-alpine         "/docker-entrypoint.…"   nginx-proxy      53 minutes ago   Up 53 minutes <span class="ok">(healthy)</span>   0.0.0.0:8081-&gt;80/tcp, [::]:8081-&gt;80/tcp
+Sending email to: Aarpeet135@gmail.com
+<span class="ok">Finished: SUCCESS</span></pre>
+<h3>C.4 Failing build #11: the pipeline stops at the Test stage</h3>
+<pre class="term">[ERROR] Tests run: 16, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 3.139 s &lt;&lt;&lt; <span class="bad">FAILURE!</span> -- in com.spe.calculator.controller.CalculatorControllerIntegrationTest
+[ERROR] com.spe.calculator.controller.CalculatorControllerIntegrationTest.missingParameter -- Time elapsed: 0.016 s &lt;&lt;&lt; <span class="bad">FAILURE!</span>
+JSON path "$.error"
+[ERROR] com.spe.calculator.controller.CalculatorControllerIntegrationTest.emptyParameter -- Time elapsed: 0.007 s &lt;&lt;&lt; <span class="bad">FAILURE!</span>
+[ERROR]   CalculatorControllerIntegrationTest.emptyParameter:143-&gt;assertBadRequest:41 JSON path "$.error"
+[ERROR]   CalculatorControllerIntegrationTest.missingParameter:136-&gt;assertBadRequest:41 JSON path "$.error"
+[ERROR] Tests run: 49, Failures: 2, Errors: 0, Skipped: 0
+[INFO] <span class="bad">BUILD FAILURE</span>
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project calculator-api: There are test failures.
+Recording test results
+Stage "Docker Build" <span class="bad">skipped due to earlier failure(s)</span>
+Stage "Push" <span class="bad">skipped due to earlier failure(s)</span>
+Stage "Deploy" <span class="bad">skipped due to earlier failure(s)</span>
+Sending email to: Aarpeet135@gmail.com
+<span class="bad">Finished: FAILURE</span></pre>
+<h3>C.5 Test and coverage summary (<code>mvn clean test</code>)</h3>
+<pre class="term"><span class="p">$ mvn clean test</span>
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0 -- in CalculatorControllerIntegrationTest
+[INFO] Tests run: 33, Failures: 0, Errors: 0, Skipped: 0 -- in CalculatorServiceTest
+[INFO] Tests run: 49, Failures: 0, Errors: 0, Skipped: 0
+[INFO] <span class="ok">BUILD SUCCESS</span>
+<span class="p">$ # JaCoCo (target/site/jacoco)</span>
+instruction   223/228  =  97.8%
+branch          8/8    = 100.0%
+line           43/45   =  95.6%
+method         25/26   =  96.2%</pre>
+<h3>C.6 Commit history (<code>git log --graph --oneline main</code>)</h3>
+<pre class="term"><span class="p">$ git log --graph --oneline main</span>
+* 8093df2 Document creating the GitHub webhook from the CLI and checking deliveries
+* 51df72a Add roll number and programme to the report summary
+* 3cc1cdb Add an operations runbook to the README and refresh the report summary
+* 205c11a Update integration tests for the new missing-parameter message
+* 68cfbdf Show expected usage in missing-parameter errors
+* 0a12ee6 Apply nginx.conf changes on deploy
+* 7fc5f9f Harden the Nginx reverse proxy
+*   02f3f6c Merge pull request #7 from Aarpeet/feature/compose-hardening
+|\  
+| * 6e1631c Harden the Compose deployment
+* |   922faa9 Merge pull request #6 from Aarpeet/feature/oci-labels
+|\ \  
+| |/  
+|/|   
+| * 9ed4473 Label images with OCI version, revision and build time
+|/  
+*   6f9108b Merge pull request #5 from Aarpeet/feature/verify-deployed-build
+|\  
+| * 955ea7a Verify the deployed build number in the Deploy stage
+|/  
+*   5ade9c6 Merge pull request #4 from Aarpeet/feature/build-info
+|\  
+| * f3e47ed Expose build metadata on /actuator/info
+|/  
+*   97276ef Merge pull request #3 from Aarpeet/feature/notification-recipient
+|\  
+| * 07ade0c Send Jenkins build notifications to a Gmail inbox
+|/  
+*   fe1003d Merge pull request #2 from Aarpeet/feature/devops-pipeline
+|\  
+| * 1378424 Add README and project report
+| * db7c8c2 Add declarative Jenkinsfile for the CI/CD pipeline
+| * 9b2f31a Add Docker Compose stack with Nginx reverse proxy
+| * a710cdd Add multi-stage Dockerfile and .dockerignore
+|/  
+*   befaa27 Merge pull request #1 from Aarpeet/feature/multiply-divide-validation
+|\  
+| * 557da89 Add JUnit 5 unit tests and MockMvc integration tests
+| * 75ef96e Add multiply/divide, Actuator health and global validation
+|/  
+* 6f7743e Add CalculatorService and REST controller with add/subtract endpoints
+* ca90d4e Initialize Spring Boot 3 Maven project with .gitignore</pre>
+<h3>C.7 GitHub webhook → Jenkins (deliveries and build cause)</h3>
+<pre class="term"><span class="p">$ gh api repos/Aarpeet/calculator-devops/hooks/704950387/deliveries --jq '.[] | ...'</span>
+2026-10-29T23:51:54.826Z  ping  HTTP 200 OK  (0.81 s)
+2026-10-29T23:53:35.818Z  push  HTTP 200 OK  (0.50 s)
+<span class="p">$ # Jenkins build #15 console</span>
+Started by GitHub push by Aarpeet
+# build started 8 s after GitHub delivered the push event
+<span class="ok">Deployment healthy after 1 attempt(s)</span>
+<span class="ok">Finished: SUCCESS</span></pre>
+
+<h2>Appendix D: Screenshots</h2>
+<figure><img class="shot" style="width:72%; display:block; margin:0 auto" src="figures/jenkins-pipeline.png" alt="jenkins-pipeline.png"><figcaption>Figure D.1: Jenkins Stages view of builds #4 to #13. Each row is one build; the circles are SCM checkout, Checkout, Build, Test, Docker Build, Push, Deploy and post actions. Build #11 failed at Test, so Docker Build, Push and Deploy were skipped.</figcaption></figure>
+<figure><img class="shot" style="width:100%; display:block; margin:0 auto" src="figures/jenkins-console.png" alt="jenkins-console.png"><figcaption>Figure D.2: Console output of build #13: deploy verification (health on :8082, proxy on :8081, live build number 13), the email notification, image cleanup and <code>Finished: SUCCESS</code>.</figcaption></figure>
+<figure><img class="shot" style="width:78%; display:block; margin:0 auto" src="figures/email-success.png" alt="email-success.png"><figcaption>Figure D.3: Success notification for build #14, sent by the pipeline's <code>post { success }</code> block (job, build number, image tag, duration, build and console URLs).</figcaption></figure>
+<figure><img class="shot" style="width:78%; display:block; margin:0 auto" src="figures/email-failure.png" alt="email-failure.png"><figcaption>Figure D.4: Failure notification for build #11, with the console log attached (<code>build.log</code>).</figcaption></figure>
+<figure><img class="shot" style="width:100%; display:block; margin:0 auto" src="figures/dockerhub-tags.png" alt="dockerhub-tags.png"><figcaption>Figure D.5: Docker Hub repository <code>aarpeet/calculator-api</code>: <code>latest</code> and the newest build tag share one digest (≈86 MB compressed).</figcaption></figure>
+<figure><img class="shot" style="width:100%; display:block; margin:0 auto" src="figures/github-prs.png" alt="github-prs.png"><figcaption>Figure D.6: GitHub: the seven feature branches merged into <code>main</code> through pull requests.</figcaption></figure>
+
+</body>
+</html>

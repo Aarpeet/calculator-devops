@@ -10,7 +10,7 @@ A push to `main` automatically builds, tests, containerises, publishes and deplo
 |---|---|
 | **GitHub** | https://github.com/Aarpeet/calculator-devops |
 | **Docker Hub** | https://hub.docker.com/r/aarpeet/calculator-api |
-| **Report** | [REPORT.md](REPORT.md) |
+| **Report** | [CSE816_MiniProject_Report.pdf](docs/report/CSE816_MiniProject_Report.pdf) (full) · [REPORT.md](REPORT.md) (summary) |
 
 ---
 

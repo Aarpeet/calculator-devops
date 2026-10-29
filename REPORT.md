@@ -4,6 +4,9 @@
 **Student:** Aarpeet Chandrasekhar (IMT2023011) · Aarpeet.Chandrasekhar@iiitb.ac.in
 **Repository:** https://github.com/Aarpeet/calculator-devops · **Image:** https://hub.docker.com/r/aarpeet/calculator-api
 
+> This is the online summary. The complete report, with evidence and screenshots, is
+> [`docs/report/CSE816_MiniProject_Report.pdf`](docs/report/CSE816_MiniProject_Report.pdf).
+
 ## 1. Overview
 
 A Spring Boot 3 (Java 17, Maven) REST service exposes `add`, `subtract`, `multiply` and `divide` under
