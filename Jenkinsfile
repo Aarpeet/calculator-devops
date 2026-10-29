@@ -94,6 +94,15 @@ pipeline {
                 sh '''
                     DOCKER_IMAGE=${DOCKER_IMAGE}:${IMAGE_TAG} docker compose up -d --remove-orphans
 
+                    # A single-file bind mount pins the file that existed when the container
+                    # started, and git checkout replaces nginx.conf with a new file, so Compose
+                    # alone never applies proxy config changes. Recreate nginx-proxy only when
+                    # the config it sees differs from the checked-out one (re-runs stay no-ops).
+                    if ! docker compose exec -T nginx-proxy cat /etc/nginx/nginx.conf | cmp -s - nginx/nginx.conf; then
+                        echo "nginx/nginx.conf changed: recreating nginx-proxy"
+                        DOCKER_IMAGE=${DOCKER_IMAGE}:${IMAGE_TAG} docker compose up -d --no-deps --force-recreate nginx-proxy
+                    fi
+
                     echo "Verifying deployment of ${DOCKER_IMAGE}:${IMAGE_TAG} ..."
                     for attempt in $(seq 1 30); do
                         health=$(curl -fsS "http://localhost:${APP_HOST_PORT}/actuator/health" || true)
