@@ -178,7 +178,12 @@ docker rm -f calculator
 
 Image highlights: multi-stage build (Maven/JDK builder → `eclipse-temurin:17-jre-alpine` runtime),
 cached dependency layer (`pom.xml` copied and resolved before `src/`), non-root `appuser`,
-read-only root-owned JAR, `EXPOSE 8080`, built-in `HEALTHCHECK`, exec-form `ENTRYPOINT`.
+read-only root-owned JAR, `EXPOSE 8080`, built-in `HEALTHCHECK`, exec-form `ENTRYPOINT`, and OCI labels
+recording the Jenkins build number, git commit and build time:
+
+```bash
+docker inspect aarpeet/calculator-api:latest --format '{{json .Config.Labels}}'
+```
 
 ## Docker Compose (full stack)
 

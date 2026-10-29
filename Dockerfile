@@ -40,6 +40,14 @@ COPY --from=builder /build/target/calculator-api.jar app.jar
 ARG BUILD_NUMBER=local
 ENV APP_BUILD_NUMBER=${BUILD_NUMBER}
 
+# Per-build OCI metadata (`docker inspect`): which pipeline run and which git
+# commit produced this image, and when. Kept last for the same caching reason.
+ARG VCS_REF=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.version="${BUILD_NUMBER}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.created="${BUILD_DATE}"
+
 USER appuser
 
 ENV SERVER_PORT=8080 \

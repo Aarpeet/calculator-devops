@@ -61,7 +61,14 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build --build-arg BUILD_NUMBER=${IMAGE_TAG} -t ${DOCKER_IMAGE}:${IMAGE_TAG} -t ${DOCKER_IMAGE}:latest .'
+                // --pull re-checks the base images so rebuilds pick up upstream security patches
+                sh '''
+                    docker build --pull \
+                        --build-arg BUILD_NUMBER=${IMAGE_TAG} \
+                        --build-arg VCS_REF=${GIT_COMMIT:-unknown} \
+                        --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+                        -t ${DOCKER_IMAGE}:${IMAGE_TAG} -t ${DOCKER_IMAGE}:latest .
+                '''
             }
         }
 
