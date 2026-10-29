@@ -206,6 +206,10 @@ environment variables (`SPRING_PROFILES_ACTIVE=prod`, `SERVER_PORT=8080`), and m
 the API is healthy (`depends_on: condition: service_healthy`). The project name is fixed
 (`calculator-devops`) so local runs and Jenkins manage the same stack.
 
+Both containers are hardened: read-only root filesystems (with `tmpfs` only where writes are needed),
+`no-new-privileges`, CPU/memory limits (512 MB for the API, 64 MB for Nginx), rotated JSON logs
+(3 × 10 MB) and a 30 s stop grace period that matches Spring's graceful shutdown.
+
 ---
 
 ## Jenkins CI/CD setup
