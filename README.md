@@ -343,6 +343,18 @@ automated mail relayed through Gmail, so a Gmail inbox is used as the recipient.
   ngrok http --url=https://<your-static-domain>.ngrok-free.dev 8080
   ```
   Expose Jenkins only with authentication enabled: anonymous users must not hold any admin rights.
+  The webhook can also be created from the CLI:
+  ```bash
+  gh api repos/Aarpeet/calculator-devops/hooks -X POST -f name=web -F active=true -f 'events[]=push' \
+    -f 'config[url]=https://<public-jenkins-url>/github-webhook/' -f 'config[content_type]=json'
+  ```
+- **Checking deliveries:** every push should show `200` in the webhook's *Recent Deliveries* tab, and the
+  build cause in Jenkins reads *Started by GitHub push*. From the CLI:
+  ```bash
+  gh api repos/Aarpeet/calculator-devops/hooks --jq '.[].id'                 # webhook id
+  gh api repos/Aarpeet/calculator-devops/hooks/<id>/deliveries \
+    --jq '.[] | "\(.delivered_at) \(.event) \(.status_code)"'
+  ```
 - **Fallback:** `pollSCM('H/5 * * * *')` checks GitHub every ~5 minutes, so pushes are still deployed
   automatically even without a webhook.
 
