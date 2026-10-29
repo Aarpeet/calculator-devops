@@ -152,7 +152,7 @@ $ curl "http://localhost:8081/api/v1/add?a=abc&b=5"
 {"error":"Invalid value 'abc' for query parameter 'a': must be a number","status":400,"timestamp":"..."}
 
 $ curl "http://localhost:8081/api/v1/add?a=2"
-{"error":"Required query parameter 'b' is missing or empty","status":400,"timestamp":"..."}
+{"error":"Missing or empty query parameter 'b' (usage: /api/v1/add?a=<number>&b=<number>)","status":400,"timestamp":"..."}
 
 $ curl "http://localhost:8081/api/v1/add?a=1e999999999&b=1"
 {"error":"Operand 'a' is out of range: magnitude must be between 1e-100 and 1e100","status":400,"timestamp":"..."}
