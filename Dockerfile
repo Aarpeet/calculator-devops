@@ -34,6 +34,12 @@ WORKDIR /app
 # cannot modify its own code.
 COPY --from=builder /build/target/calculator-api.jar app.jar
 
+# Jenkins passes its build number; /actuator/info reports it so a deploy can be
+# traced back to the pipeline run that produced it. Declared after the COPY so a
+# new build number never invalidates the cached layers above.
+ARG BUILD_NUMBER=local
+ENV APP_BUILD_NUMBER=${BUILD_NUMBER}
+
 USER appuser
 
 ENV SERVER_PORT=8080 \
