@@ -24,6 +24,7 @@ public class CalculatorService {
 
     public BigDecimal add(BigDecimal a, BigDecimal b) {
         validate(a, b);
+        // we add here
         return a.add(b);
     }
 
