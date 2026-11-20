@@ -30,6 +30,7 @@ public class CalculatorService {
 
     public BigDecimal subtract(BigDecimal a, BigDecimal b) {
         validate(a, b);
+        // we subtract here
         return a.subtract(b);
     }
 
